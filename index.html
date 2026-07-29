@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>FUNTON</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+
+<style>
+:root{
+  --abyss:#060B1A;
+  --hull:#0D1730;
+  --edge:#1B2C52;
+  --volt:#0A84FF;
+  --cyan:#22D3EE;
+  --paper:#F2F6FF;
+  --muted:#7C8DB5;
+
+  --chamfer:20px;
+  --step:clamp(14px,4vw,20px);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+html,body{height:100%}
+
+body{
+  background:var(--abyss);
+  color:var(--paper);
+  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  display:flex;
+  justify-content:center;
+  padding:var(--step);
+  padding-top:calc(var(--step) + env(safe-area-inset-top));
+  padding-bottom:calc(var(--step) + env(safe-area-inset-bottom));
+}
+
+.app{
+  width:100%;
+  max-width:420px;
+  display:flex;
+  flex-direction:column;
+  gap:clamp(18px,5vw,28px);
+}
+
+/* ---------- masthead ---------- */
+
+.masthead{display:flex;align-items:center;gap:14px}
+
+.mark{
+  width:52px;height:52px;flex:none;
+  border-radius:50%;
+  background:var(--hull);
+  border:2px solid transparent;
+  background-image:linear-gradient(var(--hull),var(--hull)),linear-gradient(140deg,var(--volt),var(--cyan));
+  background-origin:border-box;
+  background-clip:padding-box,border-box;
+  display:grid;place-items:center;
+}
+.mark svg{width:24px;height:24px;display:block}
+
+.wordmark{display:flex;flex-direction:column;gap:2px;min-width:0}
+.wordmark h1{
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:700;font-size:24px;letter-spacing:.14em;line-height:1;
+}
+.wordmark .sub{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;
+}
+
+/* ---------- chamfered frame ---------- */
+
+.frame{
+  padding:1.5px;
+  background:linear-gradient(140deg,var(--volt),var(--cyan));
+  clip-path:polygon(0 0,calc(100% - var(--chamfer)) 0,100% var(--chamfer),100% 100%,var(--chamfer) 100%,0 calc(100% - var(--chamfer)));
+}
+.frame > .inner{
+  background:var(--hull);
+  clip-path:polygon(0 0,calc(100% - var(--chamfer)) 0,100% var(--chamfer),100% 100%,var(--chamfer) 100%,0 calc(100% - var(--chamfer)));
+}
+
+/* ---------- balance ---------- */
+
+.balance{padding:26px 22px 22px}
+
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);
+}
+
+.readout{
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:600;
+  font-size:clamp(38px,13vw,54px);
+  line-height:1.05;
+  letter-spacing:-.01em;
+  margin:12px 0 4px;
+  font-variant-numeric:tabular-nums;
+  overflow-wrap:anywhere;
+}
+.readout .ticker{
+  font-size:.4em;letter-spacing:.16em;color:var(--muted);margin-left:.4em;
+}
+.readout.idle{color:var(--edge)}
+
+.note{font-size:13px;color:var(--muted);line-height:1.5}
+
+.addr{
+  margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--edge);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--muted);
+  display:flex;justify-content:space-between;gap:12px;align-items:center;
+}
+.addr span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.addr[hidden]{display:none}
+
+/* ---------- action ---------- */
+
+.action{
+  --chamfer:12px;
+  width:100%;
+  border:0;
+  cursor:pointer;
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:600;font-size:15px;letter-spacing:.1em;text-transform:uppercase;
+  padding:1.5px;
+  background:linear-gradient(140deg,var(--volt),var(--cyan));
+  clip-path:polygon(0 0,calc(100% - var(--chamfer)) 0,100% var(--chamfer),100% 100%,var(--chamfer) 100%,0 calc(100% - var(--chamfer)));
+  color:var(--paper);
+}
+.action .inner{
+  padding:15px;
+  background:var(--volt);
+  clip-path:polygon(0 0,calc(100% - var(--chamfer)) 0,100% var(--chamfer),100% 100%,var(--chamfer) 100%,0 calc(100% - var(--chamfer)));
+  transition:background .18s ease;
+}
+.action:active .inner{background:#0968CC}
+.action.ghost .inner{background:var(--hull);color:var(--muted)}
+.action:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+
+/* ---------- facts ---------- */
+
+.facts{
+  display:grid;grid-template-columns:1fr 1fr;
+  border:1px solid var(--edge);
+}
+.fact{padding:16px 18px}
+.fact + .fact{border-left:1px solid var(--edge)}
+.fact dt{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+}
+.fact dd{
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:600;font-size:19px;margin-top:6px;
+}
+
+.colophon{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;color:var(--edge);letter-spacing:.1em;text-align:center;
+}
+.colophon a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--edge)}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<main class="app">
+
+  <header class="masthead">
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M6 21V8l4-5h9l-3.2 4H11v3.4h7.4L15 14h-4v7z" fill="#F2F6FF"/>
+      </svg>
+    </div>
+    <div class="wordmark">
+      <h1>FUNTON</h1>
+      <p class="sub">FUN · TON Network</p>
+    </div>
+  </header>
+
+  <div class="frame">
+    <section class="inner balance">
+      <p class="eyebrow" id="eyebrow">Your balance</p>
+      <p class="readout idle" id="readout">—</p>
+      <p class="note" id="note">Connect a wallet to read your balance from the chain.</p>
+      <p class="addr" id="addr" hidden>
+        <span id="addrText"></span>
+        <a id="addrLink" href="#" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;flex:none">View ↗</a>
+      </p>
+    </section>
+  </div>
+
+  <button class="action" id="action" type="button">
+    <span class="inner" id="actionLabel">Connect wallet</span>
+  </button>
+
+  <dl class="facts">
+    <div class="fact"><dt>Total supply</dt><dd>500M</dd></div>
+    <div class="fact"><dt>Decimals</dt><dd>6</dd></div>
+  </dl>
+
+  <p class="colophon">
+    Jetton on TON ·
+    <a id="masterLink" href="#" target="_blank" rel="noopener">contract</a>
+  </p>
+
+</main>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   SETTINGS — edit these two lines, nothing else.
+   ══════════════════════════════════════════════════════════════ */
+
+const FUN_MASTER  = 'EQAHc706cSjluJKZIrroC49SPrnsONXykkefG-Nu0uVvrUuF';
+
+// Must point at tonconnect-manifest.json on YOUR GitHub Pages site.
+const MANIFEST_URL = 'https://KULLANICI_ADIN.github.io/funton-app/tonconnect-manifest.json';
+
+const DECIMALS = 6;
+
+/* UI strings — swap to Turkish here if you prefer. */
+const T = {
+  balance:    'Your balance',
+  connectCta: 'Connect a wallet to read your balance from the chain.',
+  connect:    'Connect wallet',
+  disconnect: 'Disconnect',
+  reading:    'Reading the chain…',
+  empty:      'No FUN in this wallet yet.',
+  holding:    'Held in your jetton wallet on TON.',
+  offline:    'Network unreachable. Tap to retry.',
+  retry:      'Retry',
+};
+
+/* ══════════════════════════════════════════════════════════════ */
+
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  try { tg.setHeaderColor('#060B1A'); tg.setBackgroundColor('#060B1A'); } catch (_) {}
+}
+
+const $ = (id) => document.getElementById(id);
+const readout = $('readout'), note = $('note'), eyebrow = $('eyebrow');
+const addr = $('addr'), addrText = $('addrText'), addrLink = $('addrLink');
+const action = $('action'), actionLabel = $('actionLabel');
+
+$('masterLink').href = 'https://tonviewer.com/' + FUN_MASTER;
+
+let ui = null;
+let current = null;   // connected wallet account
+let mode = 'connect'; // connect | disconnect | retry
+
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const fmt = (n) => n.toLocaleString('en-US', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: n < 1000 ? 2 : 0,
+});
+
+function setAction(next) {
+  mode = next;
+  actionLabel.textContent =
+    next === 'disconnect' ? T.disconnect :
+    next === 'retry'      ? T.retry      : T.connect;
+  action.classList.toggle('ghost', next === 'disconnect');
+}
+
+function paint(value) {
+  readout.classList.remove('idle');
+  const target = Number(value);
+
+  if (reduceMotion || target === 0) {
+    readout.innerHTML = fmt(target) + '<span class="ticker">FUN</span>';
+    return;
+  }
+
+  const start = performance.now();
+  const dur = 900;
+  const tick = (now) => {
+    const p = Math.min((now - start) / dur, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    readout.innerHTML = fmt(target * eased) + '<span class="ticker">FUN</span>';
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function reset() {
+  current = null;
+  readout.className = 'readout idle';
+  readout.textContent = '—';
+  eyebrow.textContent = T.balance;
+  note.textContent = T.connectCta;
+  addr.hidden = true;
+  setAction('connect');
+}
+
+async function loadBalance(rawAddress) {
+  eyebrow.textContent = T.balance;
+  note.textContent = T.reading;
+  readout.className = 'readout idle';
+  readout.textContent = '—';
+
+  try {
+    let units = null;
+
+    // Preferred: single-jetton endpoint
+    const one = await fetch(
+      `https://tonapi.io/v2/accounts/${rawAddress}/jettons/${FUN_MASTER}`
+    );
+    if (one.ok) {
+      const d = await one.json();
+      units = d.balance;
+    } else {
+      // Fallback: list every jetton, match on the master address
+      const all = await fetch(`https://tonapi.io/v2/accounts/${rawAddress}/jettons`);
+      if (!all.ok) throw new Error('tonapi ' + all.status);
+      const d = await all.json();
+      const meta = await (await fetch(`https://tonapi.io/v2/jettons/${FUN_MASTER}`)).json();
+      const masterRaw = meta?.metadata?.address;
+      const hit = (d.balances || []).find(
+        (b) => b.jetton?.address === masterRaw || b.jetton?.symbol === 'FUN'
+      );
+      units = hit ? hit.balance : '0';
+    }
+
+    const amount = Number(units || 0) / 10 ** DECIMALS;
+    paint(amount);
+    note.textContent = amount > 0 ? T.holding : T.empty;
+
+    addrText.textContent = rawAddress.slice(0, 6) + '…' + rawAddress.slice(-6);
+    addrLink.href = 'https://tonviewer.com/' + rawAddress;
+    addr.hidden = false;
+
+    setAction('disconnect');
+  } catch (err) {
+    console.error(err);
+    readout.className = 'readout idle';
+    readout.textContent = '—';
+    note.textContent = T.offline;
+    setAction('retry');
+  }
+}
+
+action.addEventListener('click', () => {
+  if (!ui) return;
+  if (mode === 'connect') ui.openModal();
+  else if (mode === 'disconnect') ui.disconnect();
+  else if (mode === 'retry' && current) loadBalance(current.address);
+});
+
+try {
+  ui = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: MANIFEST_URL });
+
+  ui.onStatusChange((wallet) => {
+    if (wallet?.account) {
+      current = wallet.account;
+      loadBalance(wallet.account.address);
+    } else {
+      reset();
+    }
+  });
+
+  ui.connectionRestored.then((restored) => {
+    if (!restored) reset();
+  });
+} catch (err) {
+  console.error(err);
+  note.textContent = 'Wallet connector failed to load. Reload the app.';
+}
+</script>
+</body>
+</html>
